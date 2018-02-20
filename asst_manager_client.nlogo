@@ -6,8 +6,8 @@ globals [
  day                  ;; number of days so far
 
  ;; Color globals
- colors               ;; list that holds the colors for the student's restaurant
- color-names          ;; list that holds the names of the colors used for the student's restaurants
+ colors               ;; list that holds the colors for the student's asset_manager
+ color-names          ;; list that holds the names of the colors used for the student's asset_managers
  num-colors           ;; number of different colors in the color list
  used-colors          ;; list that holds the colors that are already being used
 
@@ -30,18 +30,18 @@ customers-own [
  customer-risk          ;; the preferred quality of the cuisine
  customer-return          ;; the maximum amount of money the customer can spend on a meal
 
- ;; Restaurant Appeal
- appeal               ;; how appealing the restaurant is to the customer
- persuaded?           ;; has the customer been persuaded to go to a restaurant
- my-restaurant           ;; by which restaurant has the customer been persuaded
+ ;; asset_manager Appeal
+ appeal               ;; how appealing the asset_manager is to the customer
+ persuaded?           ;; has the customer been persuaded to go to a asset_manager
+ my-asset_manager           ;; by which asset_manager has the customer been persuaded
 
  ;; Eating Patterns
  energy               ;; amount of energy the customer has
 ]
 
-restaurants-own [
+asset_managers-own [
  ;; Owner Information
- user-id              ;; unique user-id, input by the client when they log in, to identify each student's restaurant
+ user-id              ;; unique user-id, input by the client when they log in, to identify each student's asset_manager
  auto?                ;; is the owner automated
  bankrupt?            ;; is the owner bankrupt
  account-balance      ;; total amount of money the owner has
@@ -50,16 +50,16 @@ restaurants-own [
  received-rank?       ;; if given a rank, ranked? is true, otherwise false
  rank                 ;; rank number according to account balance
 
- ;; Restaurant Information
- restaurant-color        ;; color of the restaurant
+ ;; asset_manager Information
+ asset_manager-color        ;; color of the asset_manager
 
- ;; Restaurant Taste Profile
- restaurant-cuisine      ;; the type of cuisine the restaurant serves
- restaurant-service      ;; the quality of the service
- restaurant-quality      ;; the quality of the food
- restaurant-price        ;; the price of a meal at the restaurant
+ ;; asset_manager Taste Profile
+ asset_manager-cuisine      ;; the type of cuisine the asset_manager serves
+ asset_manager-service      ;; the quality of the service
+ asset_manager-quality      ;; the quality of the food
+ asset_manager-price        ;; the price of a meal at the asset_manager
 
- ;; Restaurant Statistics
+ ;; asset_manager Statistics
  days-revenue         ;; amount of revenue generated so far today
  days-cost            ;; amount of costs accumulated so far today
  days-profit          ;; profit made so far today
@@ -86,12 +86,12 @@ to setup
   reset
 end
 
-;; initializes the display (but does not clear already created restaurants)
+;; initializes the display (but does not clear already created asset_managers)
 to reset
   setup-globals
   setup-consumers
   clear-all-plots
-  ask restaurants
+  ask asset_managers
   [ reset-owner-variables ]
   broadcast-system-info
 end
@@ -126,7 +126,7 @@ to setup-consumers
   create-customers num-consumer
     [ set energy consumer-energy
     set persuaded? false
-    set my-restaurant -1
+    set my-asset_manager -1
 
     setxy random-xcor random-ycor
 
@@ -147,38 +147,38 @@ to setup-consumers
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Automated Restaurants Functions ;;
+;; Automated asset_managers Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; creates automated owners
-to create-automated-restaurants [ number ]
-  create-restaurants number
+to create-automated-asset_managers [ number ]
+  create-asset_managers number
   [ set user-id who
     reset-owner-variables
     set auto? true
     set color 32
     set size 2
-    setup-automated-restaurant
+    setup-automated-asset_manager
     setup-location ]
 end
 
 ;; initializes the automated owner's variables
-to setup-automated-restaurant
+to setup-automated-asset_manager
 
   let chance (random 3)
 
   ;; initializes the automated owner's settings
-  set restaurant-service 5
-  set restaurant-quality (25 + random 50)
-  set restaurant-price (restaurant-quality + 10)
+  set asset_manager-service 5
+  set asset_manager-quality (25 + random 50)
+  set asset_manager-price (asset_manager-quality + 10)
   ifelse (chance = 0)
-  [ set restaurant-cuisine "American"
-    set shape "restaurant american" ]
+  [ set asset_manager-cuisine "American"
+    set shape "asset_manager american" ]
   [ ifelse (chance = 1)
-    [ set restaurant-cuisine "Asian"
-      set shape "restaurant asian" ]
-    [ set restaurant-cuisine "European"
-      set shape "restaurant european" ] ]
+    [ set asset_manager-cuisine "Asian"
+      set shape "asset_manager asian" ]
+    [ set asset_manager-cuisine "European"
+      set shape "asset_manager european" ] ]
 end
 
 ;;;;;;;;;;;;;;;;;;
@@ -207,14 +207,14 @@ to go
   listen-to-clients
   every .5
   [ broadcast-system-info
-    ask restaurants with [ auto? = false ]
+    ask asset_managers with [ auto? = false ]
     [ send-personal-info ] ]
 
-  if not any? restaurants
-  [ user-message "There are no restaurant owners. Log people in or create restaurants."
+  if not any? asset_managers
+  [ user-message "There are no asset_manager owners. Log people in or create asset_managers."
     stop ]
 
-  ask restaurants with [ bankrupt? = false ] ;; Let the Restaurants work
+  ask asset_managers with [ bankrupt? = false ] ;; Let the asset_managers work
   [ serve-customers
     attract-customers ]
 
@@ -224,42 +224,42 @@ to go
   if (ticks mod day-length) = 0 ;; Is it time to end the day?
   [ set day day + 1
    plot-disgruntled-customers
-   plot-restaurant-statistics
-   ask restaurants with [ bankrupt? = false ]
+   plot-asset_manager-statistics
+   ask asset_managers with [ bankrupt? = false ]
    [ end-day ]
-   if show-rank? and any? restaurants with [auto? = false]
-    [ rank-restaurants ] ]
+   if show-rank? and any? asset_managers with [auto? = false]
+    [ rank-asset_managers ] ]
   tick
 end
 
 to serve-customers ;; turtle procedure
- let restaurant# user-id
+ let asset_manager# user-id
  let new-customers 0
 
- ;; customers update the information of the restaurant where they have decided to dine
- ask customers with [ (persuaded? = true) and (my-restaurant = restaurant#) ] in-radius 1
+ ;; customers update the information of the asset_manager where they have decided to dine
+ ask customers with [ (persuaded? = true) and (my-asset_manager = asset_manager#) ] in-radius 1
  [ set new-customers new-customers + 1
    set persuaded? false
-   set my-restaurant -1
+   set my-asset_manager -1
    set appeal 0
    set energy consumer-energy ]
 
   set num-customers (num-customers + new-customers)
-  set days-revenue (days-revenue + (new-customers * restaurant-price))
-  set days-cost round (days-cost + (new-customers * service-cost * restaurant-service) + (new-customers * quality-cost * restaurant-quality))
+  set days-revenue (days-revenue + (new-customers * asset_manager-price))
+  set days-cost round (days-cost + (new-customers * service-cost * asset_manager-service) + (new-customers * quality-cost * asset_manager-quality))
   set days-profit round (days-revenue - days-cost)
 end
 
 to attract-customers ;; turtle procedure
-  let restaurant# user-id
+  let asset_manager# user-id
   let r-x xcor
   let r-y ycor
-  let r-cuisine restaurant-cuisine
-  let adj-price (restaurant-price - 0.15 * restaurant-service)
-  let adj-quality (restaurant-quality + 0.15 * restaurant-service)
+  let r-cuisine asset_manager-cuisine
+  let adj-price (asset_manager-price - 0.15 * asset_manager-service)
+  let adj-quality (asset_manager-quality + 0.15 * asset_manager-service)
   let util-price false
   let util-quality false
-  let restaurant-appeal false
+  let asset_manager-appeal false
 
   ;; Try and persuade customers that are within range
   ask customers with [ (energy < consumer-threshold) and (customer-cuisine = r-cuisine) ] in-radius 7
@@ -268,11 +268,11 @@ to attract-customers ;; turtle procedure
     set util-quality (adj-quality - customer-taste)
     if (util-price >= 0) and (util-quality >= 0)
     [
-       set restaurant-appeal (util-price + util-quality) * 5
-       if (restaurant-appeal > appeal)
-       [ set appeal restaurant-appeal
+       set asset_manager-appeal (util-price + util-quality) * 5
+       if (asset_manager-appeal > appeal)
+       [ set appeal asset_manager-appeal
          set persuaded? true
-         set my-restaurant restaurant#
+         set my-asset_manager asset_manager#
          facexy r-x r-y ] ] ]
 end
 
@@ -300,7 +300,7 @@ to end-day ;; turtle procedure
   set days-profit (days-revenue - days-cost)
   set num-customers 0
 
-  if (bankruptcy?) ;; If the owner is bankrupt shut his restaurant down
+  if (bankruptcy?) ;; If the owner is bankrupt shut his asset_manager down
   [ if (account-balance < 0)
   [ set bankrupt? true ] ]
 end
@@ -311,20 +311,20 @@ end
 
 ;; ranks owners by their account balance. if there are three players and two of them are tied with the
 ;; lower account balance, then they will both be ranked as 3rd place.
-to rank-restaurants
-  let num-ranks (length (remove-duplicates ([account-balance] of restaurants)))
-  let rank# count restaurants
+to rank-asset_managers
+  let num-ranks (length (remove-duplicates ([account-balance] of asset_managers)))
+  let rank# count asset_managers
 
   repeat num-ranks
-  [ let min-rev min [account-balance] of restaurants with [not received-rank?]
-    let rankee restaurants with [account-balance = min-rev]
+  [ let min-rev min [account-balance] of asset_managers with [not received-rank?]
+    let rankee asset_managers with [account-balance = min-rev]
     let num-tied count rankee
     ask rankee
     [ set rank rank#
       set received-rank? true ]
     set rank# rank# - num-tied ]
 
-  ask restaurants
+  ask asset_managers
   [ set received-rank? false ]
 end
 
@@ -338,9 +338,9 @@ to plot-disgruntled-customers
   plot disgruntled-consumers
 end
 
-;; plot the restaurant statistics for the user controlled restaurants
-to plot-restaurant-statistics
-    ask restaurants with [ auto? = false ]
+;; plot the asset_manager statistics for the user controlled asset_managers
+to plot-asset_manager-statistics
+    ask asset_managers with [ auto? = false ]
     [ set-current-plot "Profits"
       set-current-plot-pen user-id
       plot days-profit
@@ -352,11 +352,11 @@ to plot-restaurant-statistics
 
     set-current-plot "Profits"
     set-current-plot-pen "avg-profit"
-    plot mean [days-profit] of restaurants
+    plot mean [days-profit] of asset_managers
 
     set-current-plot "# Customers"
     set-current-plot-pen "avg-custs"
-    plot mean [num-customers] of restaurants
+    plot mean [num-customers] of asset_managers
 
     set-current-plot "Customer Satisfaction"
     set-current-plot-pen "min."
@@ -371,28 +371,28 @@ end
 ;; Calculation Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; reports the number of tavern restaurants in the marketplace
+;; reports the number of tavern asset_managers in the marketplace
 to-report american-cuisines
-  report count restaurants with [ restaurant-cuisine = "American" ]
+  report count asset_managers with [ asset_manager-cuisine = "American" ]
 end
 
-;; reports the number of fine dining restaurants in the marketplace
+;; reports the number of fine dining asset_managers in the marketplace
 to-report asian-cuisines
-  report count restaurants with [ restaurant-cuisine = "Asian" ]
+  report count asset_managers with [ asset_manager-cuisine = "Asian" ]
 end
 
-;; reports the number of fast food restaurants in the marketplace
+;; reports the number of fast food asset_managers in the marketplace
 to-report european-cuisines
-  report count restaurants with [ restaurant-cuisine = "European" ]
+  report count asset_managers with [ asset_manager-cuisine = "European" ]
 end
 
 ;; reports the avg profit from all the owners on the current day
 to-report avg-profit/owner
-  report mean [ days-profit ] of restaurants
+  report mean [ days-profit ] of asset_managers
 end
 
 to-report avg-customers/owner
-  report mean [ num-customers ] of restaurants
+  report mean [ num-customers ] of asset_managers
 end
 
 ;; reports the avg energy of the customers
@@ -400,7 +400,7 @@ to-report avg-energy/customer
   report mean [ energy ] of customers
 end
 
-;; reports the number of customers that can't find a restaurant that they want to eat at
+;; reports the number of customers that can't find a asset_manager that they want to eat at
 to-report disgruntled-consumers
   report count customers with [ energy < 0 ]
 end
@@ -428,7 +428,7 @@ to setup-quick-start
     "Use the cost sliders, QUALITY-COST, SERVICE-COST and RENT-COST to adjust costs."
     "CUSTOMER-ENERGY determines the beginning energy of the customer."
     "CUSTOMER-THRESHOLD determines the threshold at which a customer gets hungry."
-    "To create some automated restaurants set the AUTO-RESTAURANTS slider and press CREATE-AUTOMATED-RESTAURANTS."
+    "To create some automated asset_managers set the AUTO-asset_managers slider and press CREATE-AUTOMATED-asset_managers."
     "Teacher: To rerun the activity with the same group, un-press GO, adjust settings, press RE-RUN then GO."
     "Teacher: To start the simulation over with a new group, follow our instruction set again."]
   set quick-start (item qs-item qs-items)
@@ -459,38 +459,38 @@ to listen-to-clients
   while [ hubnet-message-waiting? ]
   [ hubnet-fetch-message
     ifelse hubnet-enter-message?
-    [ create-new-restaurant hubnet-message-source ]
+    [ create-new-asset_manager hubnet-message-source ]
     [ ifelse hubnet-exit-message?
-      [ remove-restaurant hubnet-message-source ]
+      [ remove-asset_manager hubnet-message-source ]
       [ execute-command hubnet-message-tag ] ] ]
 end
 
-;; NetLogo knows what each student's restaurant patch is supposed to be
+;; NetLogo knows what each student's asset_manager patch is supposed to be
 ;; doing based on the tag sent by the name Cuisine, Service, Price and Quality
 to execute-command [command]
   if command = "Cuisine"
-  [ ask restaurants with [ user-id = hubnet-message-source ]
-    [ set restaurant-cuisine hubnet-message
-      ifelse (restaurant-cuisine = "American")
-      [ set shape "restaurant american" ]
-      [ ifelse (restaurant-cuisine = "Asian")
-        [ set shape "restaurant asian" ]
-        [ set shape "restaurant european" ] ] ]
+  [ ask asset_managers with [ user-id = hubnet-message-source ]
+    [ set asset_manager-cuisine hubnet-message
+      ifelse (asset_manager-cuisine = "American")
+      [ set shape "asset_manager american" ]
+      [ ifelse (asset_manager-cuisine = "Asian")
+        [ set shape "asset_manager asian" ]
+        [ set shape "asset_manager european" ] ] ]
     stop ]
   if command = "Service"
-  [ ask restaurants with [ user-id = hubnet-message-source ]
-    [ set restaurant-service hubnet-message
-      set profit-customer round (restaurant-price - ((service-cost * restaurant-service) + (quality-cost * restaurant-quality))) ]
+  [ ask asset_managers with [ user-id = hubnet-message-source ]
+    [ set asset_manager-service hubnet-message
+      set profit-customer round (asset_manager-price - ((service-cost * asset_manager-service) + (quality-cost * asset_manager-quality))) ]
     stop ]
   if command = "Quality"
-  [ ask restaurants with [ user-id = hubnet-message-source ]
-    [ set restaurant-quality hubnet-message
-      set profit-customer round (restaurant-price - ((service-cost * restaurant-service) + (quality-cost * restaurant-quality))) ]
+  [ ask asset_managers with [ user-id = hubnet-message-source ]
+    [ set asset_manager-quality hubnet-message
+      set profit-customer round (asset_manager-price - ((service-cost * asset_manager-service) + (quality-cost * asset_manager-quality))) ]
     stop ]
   if command = "Price"
-  [ ask restaurants with [ user-id = hubnet-message-source ]
-    [ set restaurant-price hubnet-message
-      set profit-customer round (restaurant-price - ((service-cost * restaurant-service) + (quality-cost * restaurant-quality))) ]
+  [ ask asset_managers with [ user-id = hubnet-message-source ]
+    [ set asset_manager-price hubnet-message
+      set profit-customer round (asset_manager-price - ((service-cost * asset_manager-service) + (quality-cost * asset_manager-quality))) ]
     stop ]
 end
 
@@ -499,45 +499,45 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; creates a new owner
-to create-new-restaurant [ id ]
-  create-restaurants 1
+to create-new-asset_manager [ id ]
+  create-asset_managers 1
   [ set user-id id
     set auto? false
     reset-owner-variables
-    setup-restaurant
+    setup-asset_manager
     setup-location
     send-personal-info
   ]
 end
 
 ;; sets up the owners personal variables and location
-to setup-restaurant ;; Restaurant procedure
+to setup-asset_manager ;; asset_manager procedure
   let helplist remove used-colors colors
 
   ifelse empty? helplist
-  [set restaurant-color one-of colors ]
+  [set asset_manager-color one-of colors ]
   [
-   set restaurant-color one-of helplist
-   set used-colors lput restaurant-color used-colors
+   set asset_manager-color one-of helplist
+   set used-colors lput asset_manager-color used-colors
   ]
-  set color restaurant-color
+  set color asset_manager-color
   set size 2
-  set shape one-of ["restaurant american" "restaurant asian" "restaurant european" ]
-  ifelse shape = "restaurant american"
-  [set restaurant-cuisine "American"]
+  set shape one-of ["asset_manager american" "asset_manager asian" "asset_manager european" ]
+  ifelse shape = "asset_manager american"
+  [set asset_manager-cuisine "American"]
   [
-   ifelse shape = "restaurant asian"
-   [set restaurant-cuisine "Asian"]
-   [set restaurant-cuisine "European"]
+   ifelse shape = "asset_manager asian"
+   [set asset_manager-cuisine "Asian"]
+   [set asset_manager-cuisine "European"]
   ]
   reset-owner-variables
 end
 
-;; sets up the restaurant's location and premises
+;; sets up the asset_manager's location and premises
 to setup-location   ;; owner procedure
   setxy ((random (world-width - 2)) + 1)
         ((random (world-height - 2)) + 1)
-  if any? other restaurants in-radius 3
+  if any? other asset_managers in-radius 3
   [ setup-location ]
 end
 
@@ -552,46 +552,46 @@ to reset-owner-variables  ;; owner procedure
   set days-profit 0
   set profit-customer 100
   set num-customers 0
-  set restaurant-price random 50
-  set restaurant-service 50 + random 50
-  set restaurant-quality 50 + random 50
+  set asset_manager-price random 50
+  set asset_manager-service 50 + random 50
+  set asset_manager-quality 50 + random 50
   if (auto? = false) ;; send the personal info only to clients
   [ send-personal-info ]
-  ask restaurants with [auto? = false]
+  ask asset_managers with [auto? = false]
   [
-    ;; Setup the plot pens for the restaurant
+    ;; Setup the plot pens for the asset_manager
     set-current-plot "Profits"
     create-temporary-plot-pen user-id
-    set-plot-pen-color restaurant-color
+    set-plot-pen-color asset_manager-color
 
     set-current-plot "# Customers"
     create-temporary-plot-pen user-id
-    set-plot-pen-color restaurant-color
+    set-plot-pen-color asset_manager-color
   ]
 end
 
-;; delete restaurant once client has exited
-to remove-restaurant [ id ] ;; owner procedure
+;; delete asset_manager once client has exited
+to remove-asset_manager [ id ] ;; owner procedure
   let old-color false
-  ask restaurants with [user-id = id] ;; remove the owner's turtle
-  [ set old-color restaurant-color
+  ask asset_managers with [user-id = id] ;; remove the owner's turtle
+  [ set old-color asset_manager-color
     die ]
 
-  if not any? restaurants with [ color = old-color ] ;; make the unused color available again
+  if not any? asset_managers with [ color = old-color ] ;; make the unused color available again
   [ set used-colors remove (position old-color colors) used-colors ]
 end
 
 ;; sends the appropriate monitor information back to the client
-to send-personal-info ;; restaurant procedure
-  hubnet-send user-id "Restaurant Color" (color->string color)
+to send-personal-info ;; asset_manager procedure
+  hubnet-send user-id "asset_manager Color" (color->string color)
   hubnet-send user-id "Account Balance" account-balance
   hubnet-send user-id "Profit / Customer" profit-customer
   hubnet-send user-id "Rank" rank
   hubnet-send user-id "Bankrupt?" bankrupt?
-  hubnet-send user-id "Cuisine" restaurant-cuisine
-  hubnet-send user-id "Service" restaurant-service
-  hubnet-send user-id "Quality" restaurant-quality
-  hubnet-send user-id "Price" restaurant-price
+  hubnet-send user-id "Cuisine" asset_manager-cuisine
+  hubnet-send user-id "Service" asset_manager-service
+  hubnet-send user-id "Quality" asset_manager-quality
+  hubnet-send user-id "Price" asset_manager-price
 end
 
 ;; returns string version of color name
@@ -954,8 +954,8 @@ SLIDER
 200
 158
 233
-#auto-restaurants
-#auto-restaurants
+#auto-asset_managers
+#auto-asset_managers
 1
 5
 5.0
@@ -969,8 +969,8 @@ BUTTON
 234
 157
 267
-Create-Restaurants
-create-automated-restaurants #auto-restaurants
+Create-asset_managers
+create-automated-asset_managers #auto-asset_managers
 NIL
 1
 T
@@ -1037,7 +1037,7 @@ TEXTBOX
 200
 430
 218
-Number of restaurants by cuisine:
+Number of asset_managers by cuisine:
 11
 0.0
 0
@@ -1060,17 +1060,17 @@ HORIZONTAL
 @#$#@#$#@
 ## WHAT IS IT?
 
-This simulates the competition in a a single industry, in this case the restaurant industry. Each restaurant is controlled by an owner trying to maximize profit. Depending on the owners' decisions, the outcome may demonstrate the Efficient Market Theorem ("Pareto efficiency"): if all the agents within a market look out for their own best interest, it will lead to the most efficient outcome. In this case it means that if the restaurant owners try to maximize their own wealth it will also maximize the customer satisfaction.
+This simulates the competition in a a single industry, in this case the asset_manager industry. Each asset_manager is controlled by an owner trying to maximize profit. Depending on the owners' decisions, the outcome may demonstrate the Efficient Market Theorem ("Pareto efficiency"): if all the agents within a market look out for their own best interest, it will lead to the most efficient outcome. In this case it means that if the asset_manager owners try to maximize their own wealth it will also maximize the customer satisfaction.
 
 ## HOW IT WORKS
 
-Students act as restaurant owners. Each student is given one restaurant to control and starts with 2000 dollars in his/her account. There are computer-controlled consumers that move around and may choose to become customers in restaurants of their choice. Their color shows which food they like. For instance, a red client likes food that can be found in the red restaurants ('American' cuisine).
+Students act as asset_manager owners. Each student is given one asset_manager to control and starts with 2000 dollars in his/her account. There are computer-controlled consumers that move around and may choose to become customers in asset_managers of their choice. Their color shows which food they like. For instance, a red client likes food that can be found in the red asset_managers ('American' cuisine).
 
-Each day the customers decide to eat at a restaurant. In order to try and persuade the customers to come and eat at their restaurants, the owners (the students) have several options they can control: PRICE, QUALITY, SERVICE, and CUISINE. The PRICE slider sets the price of a meal at the restaurant. The QUALITY slider sets the quality of the meal at the restaurant. The SERVICE slider affects the quality of service and appeal of the restaurant (staff and decor quality). Finally the CUISINE determines the type of food the restaurant serves. The owners may change these variables freely during the day.
+Each day the customers decide to eat at a asset_manager. In order to try and persuade the customers to come and eat at their asset_managers, the owners (the students) have several options they can control: PRICE, QUALITY, SERVICE, and CUISINE. The PRICE slider sets the price of a meal at the asset_manager. The QUALITY slider sets the quality of the meal at the asset_manager. The SERVICE slider affects the quality of service and appeal of the asset_manager (staff and decor quality). Finally the CUISINE determines the type of food the asset_manager serves. The owners may change these variables freely during the day.
 
-The quality and service that restaurant offer as well as renting the space all come at a price to the restaurant owners. These prices per quality and per service are set on the server interface. At the end of the day the profit of each owner is calculated and added to his/her account balance and the process repeats.
+The quality and service that asset_manager offer as well as renting the space all come at a price to the asset_manager owners. These prices per quality and per service are set on the server interface. At the end of the day the profit of each owner is calculated and added to his/her account balance and the process repeats.
 
-Initially, each participant will be feeling their way around the market place with different settings. Then as competition continues with each owner trying to maximize profits, the various restaurants proceed to establish themselves in the market place. While the owners continue to aggressively look to attract the most customers and maximize profits, the customers actually begin to benefit. This can be seen in the three plots: average profit (of restaurants), disgruntled customers, and customer satisfaction. The average profit of the restaurants will decrease as the competition heats up and, due to the competition, the number of disgruntled customers will drop and customer satisfaction will rise.
+Initially, each participant will be feeling their way around the market place with different settings. Then as competition continues with each owner trying to maximize profits, the various asset_managers proceed to establish themselves in the market place. While the owners continue to aggressively look to attract the most customers and maximize profits, the customers actually begin to benefit. This can be seen in the three plots: average profit (of asset_managers), disgruntled customers, and customer satisfaction. The average profit of the asset_managers will decrease as the competition heats up and, due to the competition, the number of disgruntled customers will drop and customer satisfaction will rise.
 
 ## HOW TO USE IT
 
@@ -1092,7 +1092,7 @@ If BANKRUPCY? is on, then students might go bankrupt.
 Use the cost sliders, QUALITY-COST, SERVICE-COST and RENT-COST to adjust costs.
 CUSTOMER-ENERGY determines the beginning energy of the customer.
 CUSTOMER-THRESHOLD determines the threshold at which a customer gets hungry.
-To create some automated restaurants set the AUTO-RESTAURANTS slider and press CREATE-AUTOMATED-RESTAURANTS.
+To create some automated asset_managers set the AUTO-asset_managers slider and press CREATE-AUTOMATED-asset_managers.
 Teacher: To rerun the activity with the same group, un-press GO, adjust settings, press RE-RUN then GO.
 Teacher: To start the simulation over with a new group, follow our instruction set again.
 
@@ -1101,22 +1101,22 @@ SETUP - clears all turtles, patches and plots.  The setup button should only be 
 INITIAL LOGIN - allows users to log into the activity without having to start the simulation.
 GO - runs the simulation.
 RE-RUN - sets up the model to be ready for another run of the simulation with the same users.
-CREATE AUTOMATED RESTAURANTS - creates as many automated restaurants as the '#AUTO-RESTAURANTS' slider is set to.
+CREATE AUTOMATED asset_managers - creates as many automated asset_managers as the '#AUTO-asset_managers' slider is set to.
 RESET INSTRUCTIONS - resets the Quickstart instruction menu to the beginning of the instructions.
 PREV - displays the previous line of the Quickstart instructions in the monitor.
 NEXT - displays the next line of the Quickstart instructions in the monitor.
 
 Sliders:
 NUMBER-CONSUMERS - the total number of consumers in the market place.
-QUALITY-COST - the cost of increasing the quality of the restaurant.
+QUALITY-COST - the cost of increasing the quality of the asset_manager.
 RENT-COST - the amount of money rent costs each day.
 SERVICE-COST - the cost increase per each point spent on service.
 CUSTOMER-THRESHOLD - the energy level at which customers become hungry.
 CUSTOMER-ENERGY - the energy level at which customers start at and are restored to after eating.
-\#AUTO-RESTAURANTS - the number of automated owners to create. (To create the owners press the CREATE AUTOMATED RESTAURANTS button after adjusting the slider).
+\#AUTO-asset_managers - the number of automated owners to create. (To create the owners press the CREATE AUTOMATED asset_managers button after adjusting the slider).
 
 Switches:
-SHOW-RANK? - when on, ranks the restaurant owners by their account balance (the rank appears in the clients' monitors only).  When off, the ranks of the owners are not displayed in the clients' monitors.
+SHOW-RANK? - when on, ranks the asset_manager owners by their account balance (the rank appears in the clients' monitors only).  When off, the ranks of the owners are not displayed in the clients' monitors.
 BANKRUPTCY? - when on, allows owners to go bankrupt when their account balance goes below zero.
 
 Monitors:
@@ -1126,23 +1126,23 @@ EUROPEAN CUISINES - the number of European cuisines in the market place.
 DAY - what day the simulation is in.
 
 Plots:
-CUSTOMER SATISFACTION - plots the maximum, minimum and average restaurant satisfaction of the customers.
-DISGRUNTLED CUSTOMERS - plots the number of consumers who cannot find a restaurant to their liking each day.
-PROFITS - plots the profits over a period of a day of all the user-controlled restaurants as well as an average (in black).
-\# CUSTOMERS - plots the number of customers who attended each user-controlled restaurant over the period of a day as well as an average (in black).
+CUSTOMER SATISFACTION - plots the maximum, minimum and average asset_manager satisfaction of the customers.
+DISGRUNTLED CUSTOMERS - plots the number of consumers who cannot find a asset_manager to their liking each day.
+PROFITS - plots the profits over a period of a day of all the user-controlled asset_managers as well as an average (in black).
+\# CUSTOMERS - plots the number of customers who attended each user-controlled asset_manager over the period of a day as well as an average (in black).
 
 Client Information:
-After login is completed the Restaurants client interface will appear for each of the participants, including a restaurant color which will be displayed in the RESTAURANT COLOR monitor. Participant are each credited with 2000 in their individuals accounts balance and the starting settings PRICE, QUALITY, SERVICE and RESTAURANT TYPE are set to random variables.
+After login is completed the asset_managers client interface will appear for each of the participants, including a asset_manager color which will be displayed in the asset_manager COLOR monitor. Participant are each credited with 2000 in their individuals accounts balance and the starting settings PRICE, QUALITY, SERVICE and asset_manager TYPE are set to random variables.
 
-The client interface contains a number of monitors which contain personal information regarding the participant. ACCOUNT BALANCE states the amount of money that the participant currently has, and RANK shows the participants ranking out of all the owners based on account balance when the SHOW-RANK? switch is in the 'On' position. When the BANKRUPTCY? switch is on, the BANKRUPT monitor shows whether the restaurant is bankrupt. The PROFIT / CUSTOMER monitor shows the amount of money that is made from each additional customer that the restaurant receives for the current day. DAYS REVENUE and DAYS COST show the amount of revenue and costs accumulated during the current day. The RESTAURANT PROFITS and RESTAURANT CUSTOMERS plots show graphs of all the user controlled restaurants (these two plots mirror two of the four plots on the server interface). Finally, DAY shows the day that the simulation is currently on.
+The client interface contains a number of monitors which contain personal information regarding the participant. ACCOUNT BALANCE states the amount of money that the participant currently has, and RANK shows the participants ranking out of all the owners based on account balance when the SHOW-RANK? switch is in the 'On' position. When the BANKRUPTCY? switch is on, the BANKRUPT monitor shows whether the asset_manager is bankrupt. The PROFIT / CUSTOMER monitor shows the amount of money that is made from each additional customer that the asset_manager receives for the current day. DAYS REVENUE and DAYS COST show the amount of revenue and costs accumulated during the current day. The asset_manager PROFITS and asset_manager CUSTOMERS plots show graphs of all the user controlled asset_managers (these two plots mirror two of the four plots on the server interface). Finally, DAY shows the day that the simulation is currently on.
 
-The participant is able to control the restaurant by using the SERVICE, PRICE, and QUALITY sliders as well as the CUISINE choice. The participant is able to change all these settings at any time during the simulation. The SERVICE slider controls the quality of the service (waiting staff) at the restaurant. By increasing the SERVICE slider customers will perceive a better meal and a lower price for the meal, all in all increasing the restaurant's appeal. The choice of CUISINE is crucial as it determines which niche the participant enters in the market. The PRICE and QUALITY sliders set the price and the quality of the meal in the restaurant.
+The participant is able to control the asset_manager by using the SERVICE, PRICE, and QUALITY sliders as well as the CUISINE choice. The participant is able to change all these settings at any time during the simulation. The SERVICE slider controls the quality of the service (waiting staff) at the asset_manager. By increasing the SERVICE slider customers will perceive a better meal and a lower price for the meal, all in all increasing the asset_manager's appeal. The choice of CUISINE is crucial as it determines which niche the participant enters in the market. The PRICE and QUALITY sliders set the price and the quality of the meal in the asset_manager.
 
 The participants can track their own progress in the RANK monitors and aim for the greatest possible account balance.
 
 ## THINGS TO NOTICE
 
-The two things to notice in this simulation are in the two plots. As the simulation goes on there should be a downward trend of the avg. profit due to the increased competition between the restaurants, and more importantly there should be a constant increase in the average customer satisfaction value throughout the simulation. The maximum customer satisfaction should also increase along with the average value, the minimum is dependent however on how many automated owners are used. If the amount of actual participants is fairly low, below 7, and the rest are automated, then the minimum value will never rise, as some customers will be eating at the automated restaurants which don't change their variable. The increase of the average customer satisfaction is the important aspect as it is the emergent phenomena of the free market theorem.
+The two things to notice in this simulation are in the two plots. As the simulation goes on there should be a downward trend of the avg. profit due to the increased competition between the asset_managers, and more importantly there should be a constant increase in the average customer satisfaction value throughout the simulation. The maximum customer satisfaction should also increase along with the average value, the minimum is dependent however on how many automated owners are used. If the amount of actual participants is fairly low, below 7, and the rest are automated, then the minimum value will never rise, as some customers will be eating at the automated asset_managers which don't change their variable. The increase of the average customer satisfaction is the important aspect as it is the emergent phenomena of the free market theorem.
 
 ## THINGS TO TRY
 
@@ -1167,11 +1167,11 @@ What differences appear between the plots in the two different simulations? How 
 
 ## EXTENDING THE MODEL
 
-Currently, the automated restaurants do not change their product the way that real users of this simulation so. If they did, it would allow the simulation to run smoother with a lower number of actual participants. Add code so that the automated owners will change their variables when they notice their profit decrease by a significant amount.
+Currently, the automated asset_managers do not change their product the way that real users of this simulation so. If they did, it would allow the simulation to run smoother with a lower number of actual participants. Add code so that the automated owners will change their variables when they notice their profit decrease by a significant amount.
 
 ## NETLOGO FEATURES
 
-This model uses the create-temporary-plot-pen function to plot the the day's profit for all of the user-controlled restaurants.
+This model uses the create-temporary-plot-pen function to plot the the day's profit for all of the user-controlled asset_managers.
 
 ## RELATED MODELS
 
@@ -1190,7 +1190,7 @@ If you mention this model or the NetLogo software in a publication, we ask that 
 
 For the model itself:
 
-* Wilensky, U. (2004).  NetLogo HubNet Restaurants HubNet model.  http://ccl.northwestern.edu/netlogo/models/HubNetRestaurantsHubNet.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+* Wilensky, U. (2004).  NetLogo HubNet asset_managers HubNet model.  http://ccl.northwestern.edu/netlogo/models/HubNetasset_managersHubNet.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
 Please cite the NetLogo software as:
 
@@ -1387,7 +1387,7 @@ Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
-restaurant american
+asset_manager american
 false
 0
 Circle -6459832 true false 88 13 123
@@ -1414,7 +1414,7 @@ Circle -2674135 true false 96 41 105
 Circle -7500403 true true 99 114 95
 Circle -16777216 false false 105 120 90
 
-restaurant asian
+asset_manager asian
 false
 0
 Circle -6459832 true false 88 13 123
@@ -1437,7 +1437,7 @@ Circle -1184463 true false 94 49 110
 Circle -7500403 true true 105 118 89
 Circle -16777216 false false 105 120 90
 
-restaurant european
+asset_manager european
 false
 0
 Circle -6459832 true false 88 13 123
@@ -1641,7 +1641,7 @@ MONITOR
 10
 113
 59
-Restaurant Color
+asset_manager Color
 NIL
 0
 1
