@@ -1,18 +1,12 @@
 #	Base-line scenario
 #	Operating cost set to zero
 #	will effect: investment managers
-#	
-
 
 Define agents:
 Investment managers, Customers
 
 # need risk and return
 # risk seeking
-
-funciton gather-risk
-{
-}
 
 Class Investment managers
 { 
@@ -36,6 +30,9 @@ Class customers
 	Investments[management firm]
 }
 
+funciton gather-risk
+{
+}
 
 Function start-investing
 {
