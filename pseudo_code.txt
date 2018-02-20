@@ -1,0 +1,48 @@
+#	Base-line scenario
+#	Operating cost set to zero
+#	will effect: investment managers
+#	
+
+
+Define agents:
+Investment managers, Customers
+
+# need risk and return
+# risk seeking
+
+funciton gather-risk
+{
+}
+
+Class Investment managers
+{ 
+	Cash_flow
+	Operating_cost
+	Current_asset
+	Current_customers (int)
+	Minimum_investment (int)
+	Return_risk
+}
+
+Function gather-current asset
+{
+	For each customer per manager
+		Sum current asset
+}
+
+Class customers
+{
+	Cash
+	Investments[management firm]
+}
+
+
+Function start-investing
+{
+	Per timestep 3
+		Choose[management firm, amount]
+}
+Function move-investing
+{
+}
+
