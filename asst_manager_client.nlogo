@@ -21,8 +21,8 @@ breed [ customers customer ]             ;; created by the server
 
 customers-own [
  ;; Customer Preferences
- customer-type        ;; the preferred type type
- customer-risk          ;; the preferred risk of the type
+ customer-desired-return-preference        ;; the prefered risk type of product
+ customer-desired-return          ;; the preferred risk of the type
  customer-money          ;; the maximum amount of money the customer can spend
 
  ;; asset-manager Appeal
@@ -49,10 +49,10 @@ asset-managers-own [
  asset-manager-color        ;; color of the asset-manager
 
  ;; asset-manager risk Profile
- asset-manager-type      ;; the type of type the asset-manager serves
- asset-manager-service      ;; the risk of the service
- asset-manager-risk      ;; the risk of the food
- asset-manager-price        ;; the price of a meal at the asset-manager
+ company-asset-type      ;; the type of type the asset-manager serves
+ asset-manager-service      ;; the quality of the service
+ company-actual-return      ;; the risk of the food
+ management-fee        ;; the price of a meal at the asset-manager
 
  ;; asset-manager Statistics
  days-revenue         ;; amount of revenue generated so far to current day
@@ -115,15 +115,15 @@ to setup-consumers
 
     ;; initialize the customer's preferences
     set customer-money (20 + random 81)
-    set customer-risk (customer-money - 20)
+    set customer-desired-return (customer-money - 20)
     ifelse (chance = 0)
     [ set color red
-      set customer-type "AAA" ]
+      set customer-desired-return-preference "High" ]
     [ ifelse (chance = 1)
       [ set color yellow
-        set customer-type "BBB" ]
+        set customer-desired-return-preference "Medium" ]
       [ set color cyan
-        set customer-type "CCC" ] ] ]
+        set customer-desired-return-preference "Low" ] ] ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -145,15 +145,15 @@ to setup-automated-asset-manager
 
   let chance (random 3)
   set asset-manager-service 5
-  set asset-manager-risk (25 + random 50)
-  set asset-manager-price (asset-manager-risk + 10)
+  set company-actual-return (25 + random 50)
+  set management-fee (company-actual-return + 10)
   ifelse (chance = 0)
-  [ set asset-manager-type "AAA"
+  [ set company-asset-type "High"
     set shape "circle" ]
   [ ifelse (chance = 1)
-    [ set asset-manager-type "BBB"
+    [ set company-asset-type "Medium"
       set shape "triangle" ]
-    [ set asset-manager-type "CCC"
+    [ set company-asset-type "Low"
       set shape "square" ] ]
 end
 
@@ -189,8 +189,8 @@ to serve-customers ;; turtle procedure
    set customer-principal initial-principal ]
 
   set num-customers (num-customers + new-customers)
-  set days-revenue (days-revenue + (new-customers * asset-manager-price))
-  set days-cost round (days-cost + (new-customers * variable-cost * asset-manager-service) + (new-customers * return-cost * asset-manager-risk))
+  set days-revenue (days-revenue + (new-customers * management-fee))
+  set days-cost round (days-cost + (new-customers * variable-cost * asset-manager-service) + (new-customers * return-cost * company-actual-return))
   set days-profit round (days-revenue - days-cost)
 end
 
@@ -198,17 +198,17 @@ to attract-customers ;; turtle procedure
   let asset-manager# user-id
   let r-x xcor
   let r-y ycor
-  let r-type asset-manager-type
-  let adj-price (asset-manager-price - 0.15 * asset-manager-service)
-  let adj-risk (asset-manager-risk + 0.15 * asset-manager-service)
+  let r-type company-asset-type
+  let adj-price (management-fee - 0.15 * asset-manager-service)
+  let adj-risk (company-actual-return + 0.15 * asset-manager-service)
   let util-price false
   let util-risk false
   let asset-manager-appeal false
 
-  ask customers with [ (customer-principal < spending-threshold) and (customer-type = r-type) ] in-radius 7
+  ask customers with [ (customer-principal < spending-threshold) and (customer-desired-return-preference = r-type) ] in-radius 7
   [
     set util-price (customer-money - adj-price)
-    set util-risk (adj-risk - customer-risk)
+    set util-risk (adj-risk - customer-desired-return)
     if (util-price >= 0) and (util-risk >= 0)
     [
        set asset-manager-appeal (util-price + util-risk) * 5
@@ -300,16 +300,16 @@ to plot-asset-manager-statistics
     plot max [appeal] of customers
 end
 
-to-report AAA-types
-  report count asset-managers with [ asset-manager-type = "AAA" ]
+to-report High-types
+  report count asset-managers with [ company-asset-type = "High" ]
 end
 
-to-report BBB-types
-  report count asset-managers with [ asset-manager-type = "BBB" ]
+to-report Medium-types
+  report count asset-managers with [ company-asset-type = "Medium" ]
 end
 
-to-report CCC-types
-  report count asset-managers with [ asset-manager-type = "CCC" ]
+to-report Low-types
+  report count asset-managers with [ company-asset-type = "Low" ]
 end
 
 to-report avg-profit/firm
@@ -338,9 +338,9 @@ to reset-firm-variables
   set days-profit 0
   set profit-customer 100
   set num-customers 0
-  set asset-manager-price random 50
+  set management-fee random 50
   set asset-manager-service 50 + random 50
-  set asset-manager-risk 50 + random 50
+  set company-actual-return 50 + random 50
 end
 
 ;; returns string version of color name
