@@ -11,11 +11,6 @@ globals [
  num-colors           ;; number of different colors in the color list
  used-colors          ;; list that holds the colors that are already being used
 
- ;; quick start instructions variables
- quick-start          ;; current quickstart instruction displayed in the quickstart monitor
- qs-item              ;; index of the current quickstart instruction
- qs-items             ;; list of quickstart instructions
-
  n/a                  ;; unset variable indicator
 ]
 
@@ -36,7 +31,7 @@ customers-own [
  my-asset-manager           ;; by which asset-manager has the customer been persuaded
 
  ;; Eating Patterns
- motive               ;; amount of motive the customer has
+ customer-principal               ;; amount of principal that customer has, was 'motive' initially
 ]
 
 asset-managers-own [
@@ -76,7 +71,7 @@ end
 
 to reset
   setup-globals
-  setup-asset-managers #auto-asset-managers
+  setup-asset-managers #auto-asset-managers ;; slide bard variable
   setup-consumers
   clear-all-plots
   ask asset-managers
@@ -109,7 +104,7 @@ to setup-consumers
   [ die ]
 
   create-customers num-consumer
-    [ set motive consumer-motive
+    [ set customer-principal initial-principal
     set persuaded? false
     set my-asset-manager -1
 
@@ -191,11 +186,11 @@ to serve-customers ;; turtle procedure
    set persuaded? false
    set my-asset-manager -1
    set appeal 0
-   set motive consumer-motive ]
+   set customer-principal initial-principal ]
 
   set num-customers (num-customers + new-customers)
   set days-revenue (days-revenue + (new-customers * asset-manager-price))
-  set days-cost round (days-cost + (new-customers * service-cost * asset-manager-service) + (new-customers * risk-cost * asset-manager-risk))
+  set days-cost round (days-cost + (new-customers * variable-cost * asset-manager-service) + (new-customers * return-cost * asset-manager-risk))
   set days-profit round (days-revenue - days-cost)
 end
 
@@ -210,7 +205,7 @@ to attract-customers ;; turtle procedure
   let util-risk false
   let asset-manager-appeal false
 
-  ask customers with [ (motive < consumer-threshold) and (customer-type = r-type) ] in-radius 7
+  ask customers with [ (customer-principal < spending-threshold) and (customer-type = r-type) ] in-radius 7
   [
     set util-price (customer-money - adj-price)
     set util-risk (adj-risk - customer-risk)
@@ -234,13 +229,13 @@ end
 to move-customers
  if persuaded? = false
  [ rt random-float 45 - random-float 45 ]
- set motive motive - 1
+ set customer-principal customer-principal - loss-rate ;; cost of movement was originally set to 1 and now as a variable "loss-rate" which can be varied or fixed
  fd 1
 end
 
-to end-day 
+to end-day
   set account-balance round (account-balance + days-profit)
-  set days-cost operation-cost
+  set days-cost fixed-cost
   set days-revenue 0
   set days-profit (days-revenue - days-cost)
   set num-customers 0
@@ -325,12 +320,12 @@ to-report avg-customers/firm
   report mean [ num-customers ] of asset-managers
 end
 
-to-report avg-motive/customer
-  report mean [ motive ] of customers
+to-report avg-customer-principal/customer
+  report mean [ customer-principal ] of customers
 end
 
 to-report disgruntled-consumers
-  report count customers with [ motive < 0 ]
+  report count customers with [ customer-principal < 0 ]
 end
 
 to reset-firm-variables
@@ -339,7 +334,7 @@ to reset-firm-variables
   set bankrupt? false
   set account-balance 2000
   set days-revenue 0
-  set days-cost operation-cost
+  set days-cost fixed-cost
   set days-profit 0
   set profit-customer 100
   set num-customers 0
