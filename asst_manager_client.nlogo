@@ -1,159 +1,53 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Variable and Breed declarations ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-globals [
-
-;; number of quarters so far 
-;; since the customers will make decisions based on annual consecutive performance "day" has been changed to "quarter"
-quarter
-
- ;; Color globals
- colors               ;; list that holds the colors for the student's asset-manager
- color-names          ;; list that holds the names of the colors used for the student's asset-managers
- num-colors           ;; number of different colors in the color list
- used-colors          ;; list that holds the colors that are already being used
-
- n/a                  ;; unset variable indicator
-]
-
-patches-own [ ]
-
-breed [ asset-managers asset-manager ]         ;; controlled by the clients
-breed [ customers customer ]             ;; created by the server
-
-customers-own [
- ;; Customer Preferences
- customer-risk-preference        ;; the prefered risk type of product
- customer-desired-return         ;; the preferred risk of the type
- customer-money          ;; the maximum amount of money the customer can spend
-
- ;; asset-manager Appeal
- appeal               ;; how appealing the asset-manager is to the customer
- persuaded?           ;; has the customer been persuaded to go to a asset-manager
- my-asset-manager           ;; by which asset-manager has the customer been persuaded
-
- ;; commitment pattern
- customer-principal               ;; amount of principal that customer has, was 'motive' initially
-]
-
-asset-managers-own [
- ;; firm Information
- user-id              ;; unique user-id, input by the client when they log in, to identify each student's asset-manager
- account-balance      ;; total amount of money the firm has
-
- ;; asset-manager Information
- asset-manager-color        ;; color of the asset-manager
-
- ;; asset-manager risk Profile
- company-asset-type      ;; the type of type the asset-manager serves
- company-actual-return      ;; this matches the customer expected risk
- management-fee        ;; the price of a meal at the asset-manager
-
- ;; asset-manager Statistics
- quarters-revenue         ;; amount of revenue generated so far to current quarter
- quarters-cost            ;; amount of costs accumulated so far to current quarter
- quarters-profit          ;; profit made so far to current quarter
- num-customers        ;; number of customers to current quarter
- profit-customer  ;; avg profit made per customer
-]
-
-to setup
-  clear-patches
-  clear-turtles
-  clear-output
-  reset
-end
-
-to reset
-  setup-globals
-  setup-asset-managers #asset-managers ;; slide bar variable
-  setup-customers
-  clear-all-plots
-  ask asset-managers
-  [ reset-firm-variables ]
-end
-
-to setup-globals
-  reset-ticks
-  set quarter 0
-
-  set-default-shape customers "person"
-
-  ;; Set the available colors  and their names
-  set colors      [ lime   orange   brown   yellow  turquoise  cyan   sky   blue
-                   violet   magenta   pink  red  green  gray  12 62 102 38 ]
-  set color-names ["lime" "orange" "brown" "yellow" "turquoise" "cyan" "sky" "blue"
-                   "violet" "magenta" "pink" "red" "green" "gray" "maroon" "hunter green" "navy" "sand"]
-  set used-colors []
-  set num-colors length colors
-  set n/a "n/a"
-end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Customer Setup Functions ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 to setup-customers
-
-  ask customers
-  [ die ]
-
-  create-customers num-consumer
-    [ set customer-principal initial-principal
+  ask customers [ die ]
+  create-customers num-consumer [
+    set customer-principal initial-principal
     set persuaded? false
     set my-asset-manager -1
-
     setxy random-xcor random-ycor
-
     set appeal 0
-    
-    ;; initialize the customer's preferences
     set customer-money (inicial-principal + random 81)
-
-    let chance random 3 ;; used in following ifelse statement
-
-    ifelse (chance = 0)
-    [ set color red
+    let chance random 3
+    ifelse (chance = 0)[
+      set color red
       set customer-risk-preference "High"
-	set customer-desired-return 15 ]
-    [ ifelse (chance = 1)
-      [ set color yellow
-        set customer-risk-preference "Medium" 
-        set customer-desired-return 10 ]
-      [ set color cyan
-        set customer-risk-preference "Low" 
-	set customer-desired-return 5 ] ] ]
+      set customer-desired-return 15 ]
+    	[ ifelse (chance = 1) [ 
+      		set color yellow
+        	set customer-risk-preference "Medium" 
+        	set customer-desired-return 10 ]
+      		[ set color cyan
+        		set customer-risk-preference "Low" 
+						set customer-desired-return 5 ]
+    	]
+  	]
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Automated asset-managers Functions ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 to setup-asset-managers [ number ]
-  create-asset-managers number
-  [ set user-id who
-    reset-firm-variables
-    set auto? true
-    set color 32
-    set size 2
-    let chance (random 3)
-set asset-manager-service 5
-set company-actual-return (25 + random 50)
-set management-fee (company-actual-return + 10)
-ifelse (chance = 0)
-[ set company-asset-type "High"
+  create-asset-managers number [
+  set user-id who
+  reset-firm-variables
+  set color 32
+  set size 2
+  let chance (random 3)
+  set asset-manager-service 5
+	set company-actual-return (25 + random 50)
+	set management-fee (company-actual-return + 10)
+	ifelse (chance = 0) [
+    set company-asset-type "High"
 		set shape "circle" ]
-[ ifelse (chance = 1)
-		[ set company-asset-type "Medium"
+		[ ifelse (chance = 1) [ 
+      	set company-asset-type "Medium"
 				set shape "triangle" ]
-		[ set company-asset-type "Low"
-				set shape "square" ] ]
-    setup-location ]
+				[ set company-asset-type "Low"
+					set shape "square" ]
+    ]
+    setup-location
+  ]
 end
 
 to go
-  ask asset-managers with [ bankrupt? = false ] ;; Let the asset-managers work
+  ask asset-managers with [ bankrupt? = false ]
   [ serve-customers
     attract-customers ]
 
