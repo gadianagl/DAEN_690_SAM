@@ -3,7 +3,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 globals [
- day                  ;; number of days so far
+
+;; number of quarters so far 
+;; since the customers will make decisions based on annual consecutive performance "day" has been changed to "quarter"
+quarter
 
  ;; Color globals
  colors               ;; list that holds the colors for the student's asset-manager
@@ -21,8 +24,8 @@ breed [ customers customer ]             ;; created by the server
 
 customers-own [
  ;; Customer Preferences
- customer-desired-return-preference        ;; the prefered risk type of product
- customer-desired-return          ;; the preferred risk of the type
+ customer-risk-preference        ;; the prefered risk type of product
+ customer-desired-return         ;; the preferred risk of the type
  customer-money          ;; the maximum amount of money the customer can spend
 
  ;; asset-manager Appeal
@@ -30,35 +33,28 @@ customers-own [
  persuaded?           ;; has the customer been persuaded to go to a asset-manager
  my-asset-manager           ;; by which asset-manager has the customer been persuaded
 
- ;; Eating Patterns
+ ;; commitment pattern
  customer-principal               ;; amount of principal that customer has, was 'motive' initially
 ]
 
 asset-managers-own [
  ;; firm Information
  user-id              ;; unique user-id, input by the client when they log in, to identify each student's asset-manager
- auto?                ;; is the firm automated
- bankrupt?            ;; is the firm bankrupt
  account-balance      ;; total amount of money the firm has
-
- ;; Ranking Statistics
- received-rank?       ;; if given a rank, ranked? is true, otherwise false
- rank                 ;; rank number according to account balance
 
  ;; asset-manager Information
  asset-manager-color        ;; color of the asset-manager
 
  ;; asset-manager risk Profile
  company-asset-type      ;; the type of type the asset-manager serves
- asset-manager-service      ;; the quality of the service
- company-actual-return      ;; the risk of the food
+ company-actual-return      ;; this matches the customer expected risk
  management-fee        ;; the price of a meal at the asset-manager
 
  ;; asset-manager Statistics
- days-revenue         ;; amount of revenue generated so far to current day
- days-cost            ;; amount of costs accumulated so far to current day
- days-profit          ;; profit made so far to current day
- num-customers        ;; number of customers to current day
+ quarters-revenue         ;; amount of revenue generated so far to current quarter
+ quarters-cost            ;; amount of costs accumulated so far to current quarter
+ quarters-profit          ;; profit made so far to current quarter
+ num-customers        ;; number of customers to current quarter
  profit-customer  ;; avg profit made per customer
 ]
 
@@ -71,8 +67,8 @@ end
 
 to reset
   setup-globals
-  setup-asset-managers #auto-asset-managers ;; slide bard variable
-  setup-consumers
+  setup-asset-managers #asset-managers ;; slide bar variable
+  setup-customers
   clear-all-plots
   ask asset-managers
   [ reset-firm-variables ]
@@ -80,7 +76,7 @@ end
 
 to setup-globals
   reset-ticks
-  set day 0
+  set quarter 0
 
   set-default-shape customers "person"
 
@@ -98,7 +94,7 @@ end
 ;; Customer Setup Functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to setup-consumers
+to setup-customers
 
   ask customers
   [ die ]
@@ -111,19 +107,23 @@ to setup-consumers
     setxy random-xcor random-ycor
 
     set appeal 0
-    let chance random 3
-
+    
     ;; initialize the customer's preferences
-    set customer-money (20 + random 81)
-    set customer-desired-return (customer-money - 20)
+    set customer-money (inicial-principal + random 81)
+
+    let chance random 3 ;; used in following ifelse statement
+
     ifelse (chance = 0)
     [ set color red
-      set customer-desired-return-preference "High" ]
+      set customer-risk-preference "High"
+						set customer-desired-return 15 ]
     [ ifelse (chance = 1)
       [ set color yellow
-        set customer-desired-return-preference "Medium" ]
+        set customer-risk-preference "Medium" 
+        set customer-desired-return 10 ]
       [ set color cyan
-        set customer-desired-return-preference "Low" ] ] ]
+        set customer-risk-preference "Low" 
+								set customer-desired-return 5 ] ] ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -137,24 +137,19 @@ to setup-asset-managers [ number ]
     set auto? true
     set color 32
     set size 2
-    setup-automated-asset-manager
+    let chance (random 3)
+				set asset-manager-service 5
+				set company-actual-return (25 + random 50)
+				set management-fee (company-actual-return + 10)
+				ifelse (chance = 0)
+				[ set company-asset-type "High"
+						set shape "circle" ]
+				[ ifelse (chance = 1)
+						[ set company-asset-type "Medium"
+								set shape "triangle" ]
+						[ set company-asset-type "Low"
+								set shape "square" ] ]
     setup-location ]
-end
-
-to setup-automated-asset-manager
-
-  let chance (random 3)
-  set asset-manager-service 5
-  set company-actual-return (25 + random 50)
-  set management-fee (company-actual-return + 10)
-  ifelse (chance = 0)
-  [ set company-asset-type "High"
-    set shape "circle" ]
-  [ ifelse (chance = 1)
-    [ set company-asset-type "Medium"
-      set shape "triangle" ]
-    [ set company-asset-type "Low"
-      set shape "square" ] ]
 end
 
 to go
@@ -165,7 +160,7 @@ to go
   ask customers ;; Move the customers
   [ move-customers ]
 
-  if (ticks mod day-length) = 0 ;; Is it time to end the day?
+  if (ticks mod quarter-length) = 0 ;; slide-bar variable // Is it time to end the quarter?
   [ set day day + 1
    plot-disgruntled-customers
    plot-asset-manager-statistics
@@ -205,7 +200,7 @@ to attract-customers ;; turtle procedure
   let util-risk false
   let asset-manager-appeal false
 
-  ask customers with [ (customer-principal < spending-threshold) and (customer-desired-return-preference = r-type) ] in-radius 7
+  ask customers with [ (customer-principal < spending-threshold) and (customer-risk-preference = r-type) ] in-radius 7
   [
     set util-price (customer-money - adj-price)
     set util-risk (adj-risk - customer-desired-return)
