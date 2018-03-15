@@ -116,14 +116,14 @@ to setup-customers
     ifelse (chance = 0)
     [ set color red
       set customer-risk-preference "High"
-						set customer-desired-return 15 ]
+	set customer-desired-return 15 ]
     [ ifelse (chance = 1)
       [ set color yellow
         set customer-risk-preference "Medium" 
         set customer-desired-return 10 ]
       [ set color cyan
         set customer-risk-preference "Low" 
-								set customer-desired-return 5 ] ] ]
+	set customer-desired-return 5 ] ] ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,17 +138,17 @@ to setup-asset-managers [ number ]
     set color 32
     set size 2
     let chance (random 3)
-				set asset-manager-service 5
-				set company-actual-return (25 + random 50)
-				set management-fee (company-actual-return + 10)
-				ifelse (chance = 0)
-				[ set company-asset-type "High"
-						set shape "circle" ]
-				[ ifelse (chance = 1)
-						[ set company-asset-type "Medium"
-								set shape "triangle" ]
-						[ set company-asset-type "Low"
-								set shape "square" ] ]
+set asset-manager-service 5
+set company-actual-return (25 + random 50)
+set management-fee (company-actual-return + 10)
+ifelse (chance = 0)
+[ set company-asset-type "High"
+		set shape "circle" ]
+[ ifelse (chance = 1)
+		[ set company-asset-type "Medium"
+				set shape "triangle" ]
+		[ set company-asset-type "Low"
+				set shape "square" ] ]
     setup-location ]
 end
 
