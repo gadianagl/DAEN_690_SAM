@@ -44,9 +44,9 @@ to setup
   setup-globals
   setup-companies "Test-X" blue X-comp-num X-rtrn-accu X-fix-cost X-vari-cost X-fee
   setup-companies "Test-Y" orange Y-comp-num Y-rtrn-accu Y-fix-cost Y-vari-cost Y-fee
-  setup-customers "AAA" yellow AAA-cust-num AAA-toler
-  setup-customers "BBB" green BBB-cust-num BBB-toler
-  setup-customers "CCC" red CCC-cust-num CCC-toler
+  setup-customers "AAA" yellow AAA-cust-num AAA-toler AAA-init-prin
+  setup-customers "BBB" green BBB-cust-num BBB-toler BBB-init-prin
+  setup-customers "CCC" red CCC-cust-num CCC-toler CCC-init-prin
   clear-all-plots
 end
 
@@ -79,7 +79,7 @@ to setup-companies [ cptype cpcolor cpnum cpaccu cpfixcost cpvaricost cpfee]
   ]
 end
 
-to setup-customers [ ctype ccolor cnum ctoler]
+to setup-customers [ ctype ccolor cnum ctoler cinit]
   create-customers cnum
   [
     setxy random-xcor random-ycor
@@ -87,7 +87,7 @@ to setup-customers [ ctype ccolor cnum ctoler]
     set color ccolor
     set size 0.4
     set cust-comp-id -1
-    set cust-prin (random-float 5) + 5
+    set cust-prin (random-float (cinit / 2)) + (cinit / 2)
     set cust-happy 0
     set cust-type ctype
     set cust-toler ctoler
@@ -167,11 +167,12 @@ to comp-invest
 
   ask my-cust
   [
-    let temp-rate random-float (rtrn-rate - (rtrn-rate * (1 - accu)))
-    set cust-rtrn cust-prin * temp-rate
+    let temp-rate vary-rate (-1 * rtrn-rate * (1 - accu)) rtrn-rate
+    ifelse (cust-prin > 0)
+    [ set cust-rtrn cust-prin * temp-rate ]
+    [ set cust-rtrn 0 ]
     set cust-prin cust-prin + cust-rtrn
   ]
-
   set comp-prin sum [cust-prin] of my-cust
   set comp-gross comp-fee * comp-prin
   set comp-cust-cnt count my-cust
@@ -191,16 +192,16 @@ to cust-move
   ifelse (cust-comp-id = -1)
   [
     rt random 30 - random 60
-    fd attract
+    fd random-float attract
   ]
   [ ifelse (cust-happy > -1)
     [
       face company cust-comp-id
-      fd attract
+      fd random-float attract
     ]
     [
       face company cust-comp-id
-      bk repel
+      bk random-float repel
     ]
   ]
 end
@@ -208,4 +209,8 @@ end
 to comp-set-loc
   setxy ((random-float (world-width - 2)) + 1)
   ((random-float (world-height - 2)) + 1)
+end
+
+to-report vary-rate [ rate-min rate-max ]
+  report rate-min + random-float (rate-max - rate-min)
 end
