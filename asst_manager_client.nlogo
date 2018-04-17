@@ -7,190 +7,196 @@ globals [
   n/a
 ]
 
+patches-own []
+
 breed [ companies company ]
 breed [ customers customer ]
 
-patches-own [ ]
-
 customers-own [
-  my-company
-  cust-money
+  cust-id
+  cust-rtrn
+  cust-prin
+  cust-comp-id
+  cust-happy
+  cust-type
+  cust-toler
 ]
 
 companies-own [
-  company-user-id
-  comp-profit
-  comp-price
+  comp-id
+  comp-fee
+  comp-gross
   comp-cost
-  comp-type
+  comp-net
+  comp-prin
+  comp-cust-cnt
+  comp-mean-rtrn
+  comp-test
 ]
 
 to setup
-
   clear-patches
   clear-turtles
   clear-output
   setup-globals
-  setup-companies
-  setup-customers
+  setup-companies "Test-X" blue X-comp-num
+  setup-companies "Test-Y" orange Y-comp-num
+  setup-customers "AAA" yellow AAA-cust-num AAA-toler
+  setup-customers "BBB" green BBB-cust-num BBB-toler
+  setup-customers "CCC" red CCC-cust-num CCC-toler
   clear-all-plots
-  ask companies [ reset-company-variables ]
-
 end
 
 to setup-globals
-
   reset-ticks
-
   set quarter 0
-  set-default-shape customers "face happy"
-  set colors [
-    lime orange brown yellow turquoise cyan sky blue
-    violet magenta pink red green gray 12 62 102 38
-  ]
-  set color-names [
-    "lime" "orange" "brown" "yellow" "turquoise" "cyan" "sky" "blue"
-    "violet" "magenta" "pink" "red" "green" "gray" "maroon" "hunter green" "navy" "sand"
-  ]
+  set-default-shape customers "face neutral"
+  set colors      [ lime   orange   brown   yellow  turquoise  cyan   sky   blue
+    violet   magenta   pink  red  green  gray  12 62 102 38 ]
+  set color-names ["lime" "orange" "brown" "yellow" "turquoise" "cyan" "sky" "blue"
+    "violet" "magenta" "pink" "red" "green" "gray" "maroon" "hunter green" "navy" "sand"]
   set used-colors []
   set num-colors length colors
   set n/a "n/a"
-
 end
 
-to setup-customers
+to setup-companies [ cptype cpcolor cpnum ]
+  create-companies cpnum
+  [
+    set comp-test cptype
+    set comp-id who
+    set size 1.2
+    set color cpcolor
+    set comp-fee random-float .01
+    set comp-cost (random-float 2) + 3
+    set comp-mean-rtrn 0
+    comp-set-loc
+  ]
+end
 
-  create-customers num-customers [
+to setup-customers [ ctype ccolor cnum ctoler]
+  create-customers cnum
+  [
     setxy random-xcor random-ycor
-    set shape "face happy"
-    set color lime
-    set size .5
-
-    let chance random 3
-
-    ifelse (chance = 0)
-    [ set color pink ]
-    [ ifelse (chance = 1)
-      [set color yellow]
-      [set color blue]
-    ]
-
-    set cust-money random (initial-principal) * 1000
+    set cust-id who
+    set color ccolor
+    set size 0.4
+    set cust-comp-id -1
+    set cust-prin (random-float 5) + 5
+    set cust-happy 0
+    set cust-type ctype
+    set cust-toler ctoler
   ]
-
-end
-
-to setup-companies
-
-  create-companies num-companies [
-    set company-user-id who
-    set size 2
-
-    let chance random 3
-
-    ifelse (chance = 0)
-    [ set color red
-      set shape "circle"
-      set comp-type "AAA"]
-    [ ifelse (chance = 1)
-      [ set color lime
-        set shape "triangle"
-        set comp-type "BBB"]
-      [ set color 38
-        set shape "square"
-        set comp-type "CCC"]
-    ]
-
-    set comp-price random 5
-    set comp-cost (variable-cost + return-cost + fixed-cost)
-
-    setup-company-location
-  ]
-
 end
 
 to go
-  ask companies [
-    make-profit
-    attract-customers ]
   ask customers [
-    move-customers ]
-
-  set quarter quarter + 1
+    cust-check-happy
+    if ((cust-happy < cust-toler) OR (cust-comp-id = -1))
+    [ cust-eval-comp ]
+  ]
+  ask customers [ cust-move ]
+  ask companies [ comp-invest ]
+  end-qtr
 
   tick
 end
 
-to make-profit
-  let comp# company-user-id
+to cust-check-happy
+  let mean-market mean [cust-rtrn] of customers
 
-  ask customers with [ my-company = comp# ]
-  [ set cust-money cust-money * (1 + (desired-return * (-1 * exp 10))) ]
-
-  set comp-profit ((comp-price * count-num-customer) - comp-cost)
+  ifelse (cust-rtrn < mean-market)
+  [ set cust-happy 0
+    set cust-happy cust-happy - 1 ]
+  [ set cust-happy 0
+    set cust-happy cust-happy + 1 ]
 end
 
-to attract-customers
+to cust-eval-comp
+  let temp-id cust-comp-id
+  let set-id -1
+  let fee-val 0
+  let dist-val 0
+  let rtrn-val 0
+  let comp-val 0
+  let vs-val 0
 
-end
+  let comp-rad companies in-radius (world-width / 3)	;; create subset of companies in given radius from the customer
 
-to setup-company-location
+  let fee-min min [ comp-fee ] of comp-rad
+  let fee-max max [ comp-fee ] of comp-rad
+  let dist-min distance min-one-of comp-rad [distance myself]
+  let dist-max distance max-one-of comp-rad [distance myself]
+  let rtrn-min min [ comp-mean-rtrn ] of comp-rad
+  let rtrn-max max [ comp-mean-rtrn ] of comp-rad
 
-  setxy (random (world-width * .75))
-  (random (world-height * .75))
-  if any? other companies in-radius 3
-  [ setup-company-location ]
-
-end
-
-to move-customers
-
-  fd 1
-
-end
-
-to plot-company-statistics
-  set-current-plot "Profits"
-  set-current-plot-pen "avg-profit"
-  plot mean [comp-profit] of companies
-end
-
-to-report count-num-customer
-  let num-cust 0
-  let comp# company-user-id
-
-  ask customers with [my-company = comp#]
+  ask comp-rad with [comp-id != temp-id]
   [
-    set num-cust (num-cust + 1)
+    ifelse (fee-max = fee-min)	;; decreasing preference
+    [ set fee-val 0]
+    [ set fee-val (comp-fee - fee-max)/(fee-min - fee-max)]
+
+    ifelse (dist-max = dist-min)	;; decreaseing preference
+    [ set dist-val 0]
+    [ set dist-val (distance myself - dist-max)/(dist-min - dist-max)]
+
+    ifelse (rtrn-max = rtrn-min) ;; increasing preference
+    [ set rtrn-val 0]
+    [ set rtrn-val (comp-mean-rtrn - rtrn-min)/(rtrn-max - rtrn-min)]
+
+    set vs-val (fee-val * .3) + (dist-val * .1) + (rtrn-val * .6) ;; weighted values/consider implementing slider variable for the weights
+
+    if (vs-val > comp-val)
+    [ set set-id comp-id ]
   ]
 
-  report num-cust
+  set cust-comp-id set-id
 end
 
-to-report AAA-types
-  report count companies with [ comp-type = "AAA" ]
+to comp-invest
+  let temp-id comp-id
+  let my-cust customers with [ cust-comp-id = temp-id ]	;; create subset of customers with current company id
+
+  ask my-cust
+  [
+    set cust-rtrn cust-prin * ((random-float .03) - .015)
+    set cust-prin cust-prin + cust-rtrn
+  ]
+
+  set comp-prin sum [cust-prin] of my-cust
+  set comp-gross comp-fee * comp-prin
+  set comp-cust-cnt count my-cust
+  set comp-cost (20 + (comp-cust-cnt * .5))
+  set comp-net comp-gross - comp-cost
+
+  ifelse (comp-cust-cnt > 0)
+  [ set comp-mean-rtrn mean [cust-rtrn] of my-cust ]
+  [ set comp-mean-rtrn 0 ]
 end
 
-to-report BBB-types
-  report count companies with [ comp-type = "BBB" ]
-end
-
-to-report CCC-types
-  report count companies with [ comp-type = "CCC" ]
-end
-
-to end-quarters
+to end-qtr
 
 end
 
-to reset-company-variables
-
+to cust-move
+  ifelse (cust-comp-id = -1)
+  [
+    rt random 30 - random 60
+    fd attract
+  ]
+  [ ifelse (cust-happy > -1)
+    [
+      face company cust-comp-id
+      fd attract
+    ]
+    [
+      face company cust-comp-id
+      bk repel
+    ]
+  ]
 end
 
-to-report avg-profit/companyes
-
-end
-
-to test-happiness
-
+to comp-set-loc
+  setxy ((random-float (world-width - 2)) + 1)
+  ((random-float (world-height - 2)) + 1)
 end
