@@ -32,6 +32,9 @@ companies-own [
   comp-cust-cnt
   comp-mean-rtrn
   comp-test
+  comp-rtrn-accu
+  comp-fix-cost
+  comp-vari-cost
 ]
 
 to setup
@@ -39,8 +42,8 @@ to setup
   clear-turtles
   clear-output
   setup-globals
-  setup-companies "Test-X" blue X-comp-num
-  setup-companies "Test-Y" orange Y-comp-num
+  setup-companies "Test-X" blue X-comp-num X-rtrn-accu X-fix-cost X-vari-cost X-fee
+  setup-companies "Test-Y" orange Y-comp-num Y-rtrn-accu Y-fix-cost Y-vari-cost Y-fee
   setup-customers "AAA" yellow AAA-cust-num AAA-toler
   setup-customers "BBB" green BBB-cust-num BBB-toler
   setup-customers "CCC" red CCC-cust-num CCC-toler
@@ -60,17 +63,19 @@ to setup-globals
   set n/a "n/a"
 end
 
-to setup-companies [ cptype cpcolor cpnum ]
+to setup-companies [ cptype cpcolor cpnum cpaccu cpfixcost cpvaricost cpfee]
   create-companies cpnum
   [
     set comp-test cptype
     set comp-id who
     set size 1.2
     set color cpcolor
-    set comp-fee random-float .01
-    set comp-cost (random-float 2) + 3
+    set comp-fee random-float cpfee
     set comp-mean-rtrn 0
     comp-set-loc
+    set comp-rtrn-accu cpaccu
+    set comp-fix-cost cpfixcost
+    set comp-vari-cost cpvaricost
   ]
 end
 
@@ -120,6 +125,7 @@ to cust-eval-comp
   let rtrn-val 0
   let comp-val 0
   let vs-val 0
+  let weight-tot (fee-weight + dist-weight + rtrn-weight)
 
   let comp-rad companies in-radius (world-width / 3)	;; create subset of companies in given radius from the customer
 
@@ -144,7 +150,8 @@ to cust-eval-comp
     [ set rtrn-val 0]
     [ set rtrn-val (comp-mean-rtrn - rtrn-min)/(rtrn-max - rtrn-min)]
 
-    set vs-val (fee-val * .3) + (dist-val * .1) + (rtrn-val * .6) ;; weighted values/consider implementing slider variable for the weights
+    ;; weighted values/consider implementing slider variable for the weights
+    set vs-val (fee-val * (fee-weight / weight-tot)) + (dist-val * (dist-weight / weight-tot)) + (rtrn-val * (rtrn-weight / weight-tot))
 
     if (vs-val > comp-val)
     [ set set-id comp-id ]
@@ -156,17 +163,19 @@ end
 to comp-invest
   let temp-id comp-id
   let my-cust customers with [ cust-comp-id = temp-id ]	;; create subset of customers with current company id
+  let accu comp-rtrn-accu
 
   ask my-cust
   [
-    set cust-rtrn cust-prin * ((random-float .03) - .015)
+    let temp-rate random-float (rtrn-rate - (rtrn-rate * (1 - accu)))
+    set cust-rtrn cust-prin * temp-rate
     set cust-prin cust-prin + cust-rtrn
   ]
 
   set comp-prin sum [cust-prin] of my-cust
   set comp-gross comp-fee * comp-prin
   set comp-cust-cnt count my-cust
-  set comp-cost (20 + (comp-cust-cnt * .5))
+  set comp-cost ((comp-prin * comp-fix-cost) + (comp-cust-cnt * comp-vari-cost))
   set comp-net comp-gross - comp-cost
 
   ifelse (comp-cust-cnt > 0)
