@@ -42,8 +42,15 @@ to setup
   clear-turtles
   clear-output
   setup-globals
-  setup-companies "Test-X" blue X-comp-num X-rtrn-accu X-fix-cost X-vari-cost X-fee
-  setup-companies "Test-Y" orange Y-comp-num Y-rtrn-accu Y-fix-cost Y-vari-cost Y-fee
+
+  ;; comopany types
+  setup-companies "Test-V" blue V-comp-num V-rtrn-accu V-fix-cost V-vari-cost V-fee
+  setup-companies "Test-W" orange W-comp-num W-rtrn-accu W-fix-cost W-vari-cost W-fee
+  setup-companies "Test-X" pink X-comp-num X-rtrn-accu X-fix-cost X-vari-cost X-fee
+  setup-companies "Test-Y" violet Y-comp-num Y-rtrn-accu Y-fix-cost Y-vari-cost Y-fee
+  setup-companies "Test-Z" gray Z-comp-num Z-rtrn-accu Z-fix-cost Z-vari-cost Z-fee
+
+  ;; customer types
   setup-customers "AAA" yellow AAA-cust-num AAA-toler AAA-init-prin
   setup-customers "BBB" green BBB-cust-num BBB-toler BBB-init-prin
   setup-customers "CCC" red CCC-cust-num CCC-toler CCC-init-prin
