@@ -171,21 +171,26 @@ to setup-automated-company
 end
 
 to go
-  ask companies with [ bankrupt? = false ] ;; Let the companies work
+  ask companies ;with [ bankrupt? = false ] ;; Let the companies work
   [ serve-customers
     attract-customers ]
 
   ask customers ;; Move the customers
   [ move-customers ]
 
-  if (ticks mod quarter-length) = 0 ;; Is it time to end the quarter?
-  [ set quarter quarter + 1
-    plot-disgruntled-customers
-    plot-company-statistics
-    ask companies with [ bankrupt? = false ]
-    [ end-quarter ]
-    if show-rank? and any? companies with [auto? = false]
-    [ rank-companies ] ]
+  plot-disgruntled-customers
+  plot-company-statistics
+  ask companies
+  [ end-quarter ]
+
+  ;  if (ticks mod quarter-length) = 0 ;; Is it time to end the quarter?
+  ;  [ set quarter quarter + 1
+  ;    plot-disgruntled-customers
+  ;    plot-company-statistics
+  ;    ask companies with [ bankrupt? = false ]
+  ;    [ end-quarter ]
+  ;    if show-rank? and any? companies with [auto? = false]
+  ;    [ rank-companies ] ]
   tick
 end
 
@@ -195,21 +200,27 @@ to serve-customers ;; turtle procedure
   let comp-price company-management-fee
 
   ;; customers update the information of the company where they have decided to dine
-  ask customers with [ (persuaded? = true) and (my-company = company#) ] in-radius 1
-  [ set new-customers new-customers + 1
-    set persuaded? false
-    ; set my-company -1
-    set appeal 0
-    set customer-quarter-return customer-money * (customer-desired-return - (random-float (desired-return / 2)))
+  ask customers with [my-company = company#]
+  [
+;     set new-customers new-customers + 1
+;     set persuaded? false
+;     set my-company -1
+;     set appeal 0
+;     set customer-quarter-return customer-money * (customer-desired-return - (random-float (desired-return / 2)))
+;     set customer-money customer-money + customer-quarter-return
+;     set customer-quarter-profit (customer-quarter-return - comp-price)
+;     test-happiness
+
+    set customer-quarter-return customer-money * (customer-desired-return * ((-1) exp (50)))
     set customer-money customer-money + customer-quarter-return
     set customer-quarter-profit (customer-quarter-return - comp-price)
+    test-happiness
+  ]
 
-  	test-happiness ]
-
-  set num-customers (num-customers + new-customers)
-  set quarters-revenue (quarters-revenue + (new-customers * company-management-fee))
-  set quarters-cost round (quarters-cost + (new-customers * variable-cost * company-service) + (new-customers * return-cost * company-value))
-  set quarters-profit round (quarters-revenue - quarters-cost)
+;    set num-customers (num-customers + new-customers)
+;    set quarters-revenue (quarters-revenue + (new-customers * company-management-fee))
+;    set quarters-cost round (quarters-cost + (new-customers * variable-cost * company-service) + (new-customers * return-cost * company-value))
+;    set quarters-profit round (quarters-revenue - quarters-cost)
 end
 
 to attract-customers ;; turtle procedure
@@ -247,6 +258,9 @@ end
 to move-customers
   ; if persuaded? = false
   ; [ rt random-float 45 - random-float 45 ]
+
+  rt random-float 45 - random-float 45
+
   set customer-money customer-money * ( 1 - loss-rate)
   fd 1
 end
